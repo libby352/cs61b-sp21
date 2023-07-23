@@ -113,6 +113,62 @@ public class Model extends Observable {
         // TODO: Modify this.board (and perhaps this.score) to account
         // for the tilt to the Side SIDE. If the board changed, set the
         // changed local variable to true.
+        board.setViewingPerspective(side);
+        int size = board.size();
+        for(int col = 0; col < size; col += 1){
+            // move all the tiles to make them adjacent
+            for(int row = size-1; row >= 0; row -= 1){
+                Tile t = board.tile(col, row);
+                if(t != null){
+                    // find nextPos which is null
+                    int nextPos = size - 1;
+                    while (nextPos >= row) {
+                        if (board.tile(col, nextPos) == null) {
+                            break;
+                        }
+                        nextPos--;
+                    }
+                        // check if nextPos is a legal position
+                    if (nextPos >= row){
+                        board.move(col, nextPos, t);
+                        changed = true;
+                    }
+                }
+            }
+
+            // Step2. try to merge
+            for (int row = size-1; row >= 0; row --){
+                Tile curTile = board.tile(col, row);
+                // find out the next row's tile
+                int nextLine = row -1;
+                if (nextLine < 0){
+                    break;
+                }
+                Tile nextTile = board.tile(col, nextLine);
+                // if next tile is null we break this loop
+                if (nextTile == null){
+                    break;
+                }
+                int nextValue = nextTile.value();
+                if (nextValue == curTile.value()){
+                    // merge the two tiles whose value are equaled
+                    board.move(col, row, nextTile);
+                    score += curTile.value()*2;
+                    // move the tiles behind the two merged tiles to the place where the second tiles was
+                    for (int p = nextLine - 1; p >=0; p -=1 ){
+                        Tile tile = board.tile(col, p);
+                        if (tile == null){
+                            break;
+                        }
+                        if (p < size){
+                            board.move(col, p+1,tile);
+                        }
+                    }
+                    changed = true;
+                }
+            }
+        }
+        board.setViewingPerspective(Side.NORTH);
 
         checkGameOver();
         if (changed) {
@@ -138,6 +194,14 @@ public class Model extends Observable {
      * */
     public static boolean emptySpaceExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for(int i=0;i<size;i+=1){
+            for(int j=0;j<size;j+=1){
+                if(b.tile(i,j)==null){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -148,6 +212,14 @@ public class Model extends Observable {
      */
     public static boolean maxTileExists(Board b) {
         // TODO: Fill in this function.
+        int size = b.size();
+        for(int i=0;i<size;i+=1){
+            for(int j=0;j<size;j+=1){
+                if(b.tile(i, j) != null && b.tile(i,j).value()==MAX_PIECE){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
@@ -159,6 +231,17 @@ public class Model extends Observable {
      */
     public static boolean atLeastOneMoveExists(Board b) {
         // TODO: Fill in this function.
+        if(emptySpaceExists(b)==true) return true;
+        int size = b.size();
+        for(int i=0;i<size;i+=1){
+            for(int j=0;j<size;j+=1){
+                boolean leftOrRight = j+1<b.size() && b.tile(i,j).value()==b.tile(i,j+1).value();
+                boolean upOrDown = i+1<b.size() && b.tile(i,j).value()==b.tile(i+1,j).value();
+                if(leftOrRight || upOrDown){
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
